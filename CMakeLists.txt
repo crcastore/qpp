@@ -5,7 +5,7 @@ project(
   qpp
   VERSION ${QPP_VERSION_NUM}
   LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -64,7 +64,7 @@ include(cmake/qpp_MATLAB.cmake)
 include(cmake/qpp_dependencies.cmake)
 
 # Unit testing
-add_subdirectory(${CMAKE_SOURCE_DIR}/unit_tests/ EXCLUDE_FROM_ALL SYSTEM)
+add_subdirectory(${CMAKE_SOURCE_DIR}/unit_tests/ )
 
 # Enable all warnings for GCC and Clang/AppleClang
 if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang" OR ${CMAKE_CXX_COMPILER_ID}
@@ -81,27 +81,46 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang" OR ${CMAKE_CXX_COMPILER_ID}
 endif()
 
 # Examples
-include(cmake/examples.cmake)
+#include(cmake/examples.cmake)
 # END LOCAL stuff
 
+
+# Google Benchmark
+option(ENABLE_BENCHMARKS "Enable Google Benchmark support" ON)
+if(ENABLE_BENCHMARKS)
+  include(FetchContent)
+  FetchContent_Declare(
+    benchmark
+    GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG v1.8.3  # Change to latest stable version if needed
+  )
+  FetchContent_MakeAvailable(benchmark)
+  
+  add_executable(benchmark_qpp benchmarks/benchmark_qpp.cpp)
+  target_link_libraries(benchmark_qpp PRIVATE benchmark::benchmark libqpp)
+  target_include_directories(benchmark_qpp PRIVATE ${benchmark_SOURCE_DIR}/include $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include $<INSTALL_INTERFACE:include/qpp ${EIGEN3_INCLUDE_DIR})
+
+
+endif()
+
 # Installation
-set(QPP_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}")
-install(DIRECTORY include/ DESTINATION ${QPP_INSTALL_DIR})
-install(DIRECTORY qasmtools/include/ DESTINATION ${QPP_INSTALL_DIR})
-install(TARGETS libqpp EXPORT qpp_targets)
-install(EXPORT qpp_targets DESTINATION "lib/cmake/${PROJECT_NAME}")
-include(CMakePackageConfigHelpers)
-configure_package_config_file(
-  "cmake/qppConfig.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/qppConfig.cmake"
-  INSTALL_DESTINATION "lib/cmake/${PROJECT_NAME}")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/qppConfig.cmake"
-        DESTINATION "lib/cmake/${PROJECT_NAME}")
-install(FILES "${CMAKE_SOURCE_DIR}/cmake/qpp_dependencies.cmake"
-        DESTINATION "lib/cmake/${PROJECT_NAME}")
-install(FILES "${CMAKE_SOURCE_DIR}/cmake/qpp_eigen3.cmake"
-        DESTINATION "lib/cmake/${PROJECT_NAME}")
-install(FILES "${CMAKE_SOURCE_DIR}/cmake/qpp_MATLAB.cmake"
-        DESTINATION "lib/cmake/${PROJECT_NAME}")
+#set(QPP_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}")
+#install(DIRECTORY include/ DESTINATION ${QPP_INSTALL_DIR})
+#install(DIRECTORY qasmtools/include/ DESTINATION ${QPP_INSTALL_DIR})
+#install(TARGETS libqpp EXPORT qpp_targets)
+#install(EXPORT qpp_targets DESTINATION "lib/cmake/${PROJECT_NAME}")
+#include(CMakePackageConfigHelpers)
+#configure_package_config_file(
+#  "cmake/qppConfig.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/qppConfig.cmake"
+#  INSTALL_DESTINATION "lib/cmake/${PROJECT_NAME}")
+#install(FILES "${CMAKE_CURRENT_BINARY_DIR}/qppConfig.cmake"
+#        DESTINATION "lib/cmake/${PROJECT_NAME}")
+#install(FILES "${CMAKE_SOURCE_DIR}/cmake/qpp_dependencies.cmake"
+#        DESTINATION "lib/cmake/${PROJECT_NAME}")
+#install(FILES "${CMAKE_SOURCE_DIR}/cmake/qpp_eigen3.cmake"
+#        DESTINATION "lib/cmake/${PROJECT_NAME}")
+#install(FILES "${CMAKE_SOURCE_DIR}/cmake/qpp_MATLAB.cmake"
+#        DESTINATION "lib/cmake/${PROJECT_NAME}")
 
 # Uninstall
 # https://gitlab.kitware.com/cmake/community/-/wikis/FAQ#can-i-do-make-uninstall-with-cmake
